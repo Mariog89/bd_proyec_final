@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Libros - Bookify</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .search-form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-form input {
+            flex: 1;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .search-form button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .no-results {
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/panel">← Volver al Panel</a>
+    </div>
+    
+    <h2>Buscar Libros</h2>
+    
+    <form class="search-form" method="GET">
+        <input type="text" name="consulta" placeholder="Título, autor o editorial..." value="{{ consulta }}">
+        <button type="submit">Buscar</button>
+    </form>
+    
+    {% if consulta %}
+        {% if resultados %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Género</th>
+                        <th>Editorial</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for libro in resultados %}
+                    <tr>
+                        <td>{{ libro.titulo }}</td>
+                        <td>{{ libro.autor }}</td>
+                        <td>{{ libro.genero }}</td>
+                        <td>{{ libro.editorial }}</td>
+                        <td>{{ libro.precio }}</td>
+                        <td>{{ libro.stock }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-results">
+                No se encontraron resultados para "{{ consulta }}".
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="no-results">
+            Ingresa un término de búsqueda para mostrar resultados.
+        </div>
+    {% endif %}
+</body>
+</html>

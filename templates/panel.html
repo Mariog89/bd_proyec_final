@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel - Bookify</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .menu {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .menu a {
+            text-decoration: none;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+        }
+        .menu a:hover {
+            background-color: #45a049;
+        }
+        .user-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Panel de Administración - Bookify</h2>
+    
+    <div class="user-info">
+        <p>Bienvenido, <strong>{{ usuario }}</strong></p>
+    </div>
+    
+    <div class="menu">
+        <a href="/agregar-libro">Agregar Libro</a>
+        <a href="/buscar-libro">Buscar Libro</a>
+        <a href="/vender-libro">Vender Libro</a>
+        <a href="/cerrar_sesion">Cerrar Sesión</a>
+    </div>
+    
+    <div class="dashboard">
+        <h3>Resumen del sistema</h3>
+        <p>Desde aquí podrás gestionar tu librería. Utiliza las opciones del menú para acceder a las diferentes funcionalidades.</p>
+    </div>
+</body>
+</html>
