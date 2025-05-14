@@ -97,6 +97,16 @@ def agregar_libro():
                           generos=generos, 
                           editoriales=editoriales)
 
+@app.route('/libros-por-autor/<int:id_autor>')
+def libros_por_autor(id_autor):
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+        
+    libros = controlador_bookify.obtener_libros_por_autor(id_autor)
+    autor = next((a for a in controlador_bookify.obtener_autores() if a['id'] == id_autor), None)
+    
+    return render_template('libros_por_autor.html', libros=libros, autor=autor)
+
 @app.route('/buscar-libro', methods=['GET'])
 def buscar_libro():
     consulta = request.args.get('consulta', '')

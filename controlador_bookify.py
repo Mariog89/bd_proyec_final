@@ -1,6 +1,7 @@
 from bd import obtener_conexion
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
+import mysql.connector
 
 # Configuración de logging para ayudar a depurar
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -128,6 +129,14 @@ def obtener_editoriales():
 
 def agregar_libro(titulo, id_autor, id_genero, id_editorial, precio, stock):
     try:
+        # Validaciones de tipo de dato y valores para manejo de errores
+        if not isinstance(precio, (int, float)) or precio <= 0:
+            return False, "El precio debe ser un número positivo"
+        if not isinstance(stock, int) or stock < 0:
+            return False, "El stock debe ser un número entero no negativo"
+        if not titulo or not titulo.strip():
+            return False, "El título no puede estar vacío"
+        
         conexion = obtener_conexion()
         if not conexion:
             logging.error("No se pudo establecer la conexión a la base de datos")
@@ -223,6 +232,10 @@ def obtener_libros_disponibles():
 
 def registrar_venta(id_libro, cantidad, id_cliente):
     try:
+        # Validaciones de tipo de dato y valores
+        if not isinstance(cantidad, int) or cantidad <= 0:
+            return False, "La cantidad debe ser un número entero positivo"
+
         conexion = obtener_conexion()
         if not conexion:
             logging.error("No se pudo establecer la conexión a la base de datos")
@@ -230,42 +243,47 @@ def registrar_venta(id_libro, cantidad, id_cliente):
             
         cursor = conexion.cursor()
         
-        # Verificar stock disponible
-        cursor.execute("SELECT precio, stock FROM libros WHERE id = %s", (id_libro,))
-        resultado = cursor.fetchone()
-        
-        if not resultado:
-            cursor.close()
-            conexion.close()
-            return False, "El libro no existe"
+        try:
+            # Usar el procedimiento almacenado sp_registrar_venta
+            cursor.callproc('sp_registrar_venta', (id_libro, id_cliente, cantidad))
+            conexion.commit()
+            logging.info(f"Venta registrada exitosamente: Libro ID {id_libro}, Cantidad {cantidad}")
+            return True, "Venta registrada correctamente"
             
-        precio, stock = resultado
-        
-        if stock < cantidad:
-            cursor.close()
-            conexion.close()
-            return False, "No hay suficiente stock disponible"
-            
-        # Calcular el total
-        total = precio * cantidad
-        
-        # Registrar la venta
-        cursor.execute(
-            "INSERT INTO ventas (id_libro, id_cliente, cantidad, total, fecha) VALUES (%s, %s, %s, %s, NOW())",
-            (id_libro, id_cliente, cantidad, total)
-        )
-        
-        # Actualizar el stock
-        cursor.execute(
-            "UPDATE libros SET stock = stock - %s WHERE id = %s",
-            (cantidad, id_libro)
-        )
-        
-        conexion.commit()
-        cursor.close()
-        conexion.close()
-        logging.info(f"Venta registrada exitosamente: Libro ID {id_libro}, Cantidad {cantidad}")
-        return True, "Venta registrada correctamente"
+        except mysql.connector.Error as e:
+            conexion.rollback()
+            if e.errno == 1644:  # Código de error para SIGNAL SQLSTATE
+                return False, "No hay suficiente stock disponible"
+            logging.error(f"Error al registrar venta: {e}")
+            return False, f"Error al registrar venta: {str(e)}"
     except Exception as e:
         logging.error(f"Error al registrar venta: {e}")
-        return False, f"Error al registrar venta: {e}"
+        return False, f"Error al registrar venta: {str(e)}"
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+def obtener_libros_por_autor(id_autor):
+    try:
+        conexion = obtener_conexion()
+        if not conexion:
+            logging.error("No se pudo establecer la conexión a la base de datos")
+            return []
+            
+        cursor = conexion.cursor(dictionary=True)
+        
+        # Usar el procedimiento almacenado sp_get_libros_por_autor
+        cursor.callproc('sp_get_libros_por_autor', (id_autor,))
+        
+        # Obtener resultados del procedimiento almacenado
+        for result in cursor.stored_results():
+            libros = result.fetchall()
+            
+        cursor.close()
+        conexion.close()
+        return libros
+    except Exception as e:
+        logging.error(f"Error al obtener libros por autor: {e}")
+        return []
