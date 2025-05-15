@@ -6,14 +6,24 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
         .menu {
-            display: flex;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 30px;
+        }
+        .menu-section {
+            margin-bottom: 30px;
+        }
+        .menu-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
         }
         .menu a {
             text-decoration: none;
@@ -21,6 +31,8 @@
             background-color: #4CAF50;
             color: white;
             border-radius: 4px;
+            text-align: center;
+            transition: background-color 0.3s;
         }
         .menu a:hover {
             background-color: #45a049;
@@ -39,17 +51,29 @@
     <div class="user-info">
         <p>Bienvenido, <strong>{{ usuario }}</strong></p>
     </div>
-    
-    <div class="menu">
-        <a href="/agregar-libro">Agregar Libro</a>
-        <a href="/buscar-libro">Buscar Libro</a>
-        <a href="/vender-libro">Vender Libro</a>
-        <a href="/cerrar_sesion">Cerrar Sesión</a>
+
+    <div class="menu-section">
+        <h3>Gestión de Libros</h3>
+        <div class="menu">
+            <a href="/agregar-libro">Agregar Libro</a>
+            <a href="/listar-libros">Listar Libros</a>
+            <a href="/buscar-libro">Buscar Libro</a>
+            <a href="/vender-libro">Vender Libro</a>
+        </div>
     </div>
-    
-    <div class="dashboard">
-        <h3>Resumen del sistema</h3>
-        <p>Desde aquí podrás gestionar tu librería. Utiliza las opciones del menú para acceder a las diferentes funcionalidades.</p>
+
+    <div class="menu-section">
+        <h3>Gestión de Autores</h3>
+        <div class="menu">
+            <a href="/autores">Gestionar Autores</a>
+        </div>
+    </div>
+
+    <div class="menu-section">
+        <h3>Sistema</h3>
+        <div class="menu">
+            <a href="/cerrar_sesion">Cerrar Sesión</a>
+        </div>
     </div>
 </body>
 </html>

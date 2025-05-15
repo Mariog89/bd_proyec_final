@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, request, redirect, url_for
+from flask import Flask, session, render_template, request, redirect, url_for, flash
 import controlador_bookify
 import os
 
@@ -117,25 +117,92 @@ def buscar_libro():
     
     return render_template('buscar_libro.html', resultados=resultados, consulta=consulta)
 
-@app.route('/vender-libro', methods=['GET', 'POST'])
-def vender_libro():
+@app.route('/listar-libros', methods=['GET'])
+def listar_libros():
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+    
+    libros = controlador_bookify.obtener_todos_libros()
+    return render_template('listar_libros.html', libros=libros)
+
+@app.route('/editar-libro/<int:id_libro>', methods=['GET', 'POST'])
+def editar_libro(id_libro):
     if 'user_id' not in session:
         return redirect(url_for('iniciar_sesion'))
         
     if request.method == 'POST':
-        id_libro = request.form['libro']
-        cantidad = int(request.form['cantidad'])
-        id_cliente = session['user_id']
-        
-        exito, mensaje = controlador_bookify.registrar_venta(id_libro, cantidad, id_cliente)
+        datos = {
+            'titulo': request.form['titulo'],
+            'id_autor': request.form['autor'],
+            'id_genero': request.form['genero'],
+            'id_editorial': request.form['editorial'],
+            'precio': request.form['precio'],
+            'stock': request.form['stock']
+        }
+        exito, mensaje = controlador_bookify.actualizar_libro(id_libro, datos)
         if exito:
-            return render_template('vender_libro.html', mensaje="Venta registrada exitosamente")
-        else:
-            return render_template('vender_libro.html', error=mensaje)
+            return redirect(url_for('listar_libros'))
+        return render_template('editar_libro.html', error=mensaje)
     
-    # Obtener los libros disponibles
-    libros = controlador_bookify.obtener_libros_disponibles()
-    return render_template('vender_libro.html', libros=libros)
+    libro = controlador_bookify.obtener_libro(id_libro)
+    autores = controlador_bookify.obtener_autores()
+    generos = controlador_bookify.obtener_generos()
+    editoriales = controlador_bookify.obtener_editoriales()
+    
+    return render_template('a ', 
+                         libro=libro,
+                         autores=autores,
+                         generos=generos,
+                         editoriales=editoriales)
+
+@app.route('/eliminar-libro/<int:id_libro>')
+def eliminar_libro(id_libro):
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+    
+    exito, mensaje = controlador_bookify.eliminar_libro(id_libro)
+    if not exito:
+        flash(mensaje, 'error')
+    return redirect(url_for('listar_libros'))
+
+@app.route('/autores')
+def listar_autores():
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+    
+    autores = controlador_bookify.obtener_autores()
+    return render_template('autores.html', autores=autores)
+
+@app.route('/agregar-autor', methods=['POST'])
+def agregar_autor():
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+    
+    nombre = request.form['nombre']
+    nacionalidad = request.form['nacionalidad']
+    fecha_nacimiento = request.form['fecha_nacimiento']
+    
+    exito, mensaje = controlador_bookify.agregar_autor(nombre, nacionalidad, fecha_nacimiento)
+    if not exito:
+        flash(mensaje, 'error')
+    return redirect(url_for('listar_autores'))
+
+@app.route('/eliminar-autor/<int:id_autor>')
+def eliminar_autor(id_autor):
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+    
+    exito, mensaje = controlador_bookify.eliminar_autor(id_autor)
+    if not exito:
+        flash(mensaje, 'error')
+    return redirect(url_for('listar_autores'))
+
+@app.route('/vender-libro')
+def vender_libro():
+    if 'user_id' not in session:
+        return redirect(url_for('iniciar_sesion'))
+    
+    return render_template('vender_libro.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

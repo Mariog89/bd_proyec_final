@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Autores - Bookify</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .form-add {
+            margin-bottom: 20px;
+            display: grid;
+            gap: 10px;
+        }
+        .form-add input {
+            padding: 8px;
+        }
+        .btn {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            text-decoration: none;
+            padding: 5px 10px;
+            color: white;
+            border-radius: 4px;
+        }
+        .messages {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/panel">← Volver al Panel</a>
+    </div>
+
+    <h2>Gestión de Autores</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="messages {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="/agregar-autor" method="POST" class="form-add">
+        <input type="text" name="nombre" placeholder="Nombre del autor" required>
+        <input type="text" name="nacionalidad" placeholder="Nacionalidad" required>
+        <input type="date" name="fecha_nacimiento" required>
+        <button type="submit" class="btn">Agregar Autor</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Nacionalidad</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for autor in autores %}
+            <tr>
+                <td>{{ autor.nombre }}</td>
+                <td>{{ autor.nacionalidad }}</td>
+                <td>{{ autor.fecha_nacimiento }}</td>
+                <td>
+                    <a href="/eliminar-autor/{{ autor.id }}" 
+                       class="btn-delete"
+                       onclick="return confirm('¿Estás seguro de que deseas eliminar este autor?')">
+                        Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

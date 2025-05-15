@@ -84,7 +84,11 @@ def obtener_autores():
             return []
             
         cursor = conexion.cursor(dictionary=True)
-        cursor.execute("SELECT id, nombre FROM autores ORDER BY nombre")
+        cursor.execute("""
+            SELECT id, nombre, nacionalidad, DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') as fecha_nacimiento 
+            FROM autores 
+            ORDER BY nombre
+        """)
         autores = cursor.fetchall()
         cursor.close()
         conexion.close()
@@ -130,6 +134,8 @@ def obtener_editoriales():
 def agregar_libro(titulo, id_autor, id_genero, id_editorial, precio, stock):
     try:
         # Validaciones de tipo de dato y valores para manejo de errores
+        precio = float(precio)
+        stock = int(stock)
         if not isinstance(precio, (int, float)) or precio <= 0:
             return False, "El precio debe ser un número positivo"
         if not isinstance(stock, int) or stock < 0:
@@ -287,3 +293,163 @@ def obtener_libros_por_autor(id_autor):
     except Exception as e:
         logging.error(f"Error al obtener libros por autor: {e}")
         return []
+
+def obtener_libro(id_libro):
+    try:
+        cursor = obtener_conexion().cursor(dictionary=True)
+        cursor.execute("""
+            SELECT * FROM libros WHERE id = %s
+        """, (id_libro,))
+        libro = cursor.fetchone()
+        cursor.close()
+        return libro
+    except Exception as e:
+        print(f"Error al obtener libro: {e}")
+        return None
+
+def actualizar_libro(id_libro, datos):
+    try:
+        # Validar precio positivo
+        precio = float(datos['precio'])
+        if precio <= 0:
+            return False, "El precio debe ser un valor positivo"
+        
+        # Validar stock no negativo
+        stock = int(datos['stock'])
+        if stock < 0:
+            return False, "El stock no puede ser negativo"
+        
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        
+        cursor.execute("""
+            UPDATE libros 
+            SET titulo = %s, 
+                id_autor = %s, 
+                id_genero = %s, 
+                id_editorial = %s, 
+                precio = %s, 
+                stock = %s
+            WHERE id = %s
+        """, (
+            datos['titulo'],
+            datos['id_autor'],
+            datos['id_genero'],
+            datos['id_editorial'],
+            precio,
+            stock,
+            id_libro
+        ))
+        
+        conexion.commit()
+        cursor.close()
+        
+        return True, "Libro actualizado correctamente"
+        
+    except ValueError:
+        return False, "El precio y stock deben ser valores numéricos válidos"
+    except Exception as e:
+        print(f"Error al actualizar libro: {e}")
+        return False, "Error al actualizar el libro"    
+
+def obtener_libro(id_libro):
+    try:
+        conexion = obtener_conexion()
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT * FROM libros WHERE id = %s
+        """, (id_libro,))
+        libro = cursor.fetchone()
+        cursor.close()
+        conexion.close()
+        return libro
+    except Exception as e:
+        logging.error(f"Error al obtener libro: {e}")
+        return None
+
+def actualizar_libro(id_libro, datos):
+    try:
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE libros 
+            SET titulo = %s, id_autor = %s, id_genero = %s, 
+                id_editorial = %s, precio = %s, stock = %s
+            WHERE id = %s
+        """, (datos['titulo'], datos['id_autor'], datos['id_genero'],
+              datos['id_editorial'], datos['precio'], datos['stock'], id_libro))
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        return True, "Libro actualizado correctamente"
+    except Exception as e:
+        logging.error(f"Error al actualizar libro: {e}")
+        return False, "Error al actualizar el libro"
+
+def eliminar_libro(id_libro):
+    try:
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        
+        # Verificar si el libro tiene ventas asociadas
+        cursor.execute("SELECT COUNT(*) FROM ventas WHERE id_libro = %s", (id_libro,))
+        if cursor.fetchone()[0] > 0:
+            return False, "No se puede eliminar el libro porque tiene ventas asociadas"
+        
+        cursor.execute("DELETE FROM libros WHERE id = %s", (id_libro,))
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        return True, "Libro eliminado correctamente"
+    except Exception as e:
+        logging.error(f"Error al eliminar libro: {e}")
+        return False, "Error al eliminar el libro"
+
+def obtener_todos_libros():
+    try:
+        conexion = obtener_conexion()
+        with conexion.cursor(dictionary=True) as cursor:
+            cursor.execute("""
+                SELECT l.id, l.titulo, l.precio, l.stock,
+                       a.nombre as autor, g.nombre as genero, e.nombre as editorial
+                FROM libros l
+                INNER JOIN autores a ON l.id_autor = a.id
+                INNER JOIN generos g ON l.id_genero = g.id
+                INNER JOIN editoriales e ON l.id_editorial = e.id
+                ORDER BY l.titulo
+            """)
+            libros = cursor.fetchall()
+        return libros
+    except Exception as e:
+        logging.error(f"Error al obtener libros: {e}")
+        return []
+
+def agregar_autor(nombre, nacionalidad, fecha_nacimiento):
+    try:
+        conexion = obtener_conexion()
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO autores (nombre, nacionalidad, fecha_nacimiento)
+                VALUES (%s, %s, %s)
+            """, (nombre, nacionalidad, fecha_nacimiento))
+        conexion.commit()
+        return True, "Autor agregado correctamente"
+    except Exception as e:
+        logging.error(f"Error al agregar autor: {e}")
+        return False, "Error al agregar el autor"
+
+def eliminar_autor(id_autor):
+    try:
+        conexion = obtener_conexion()
+        with conexion.cursor() as cursor:
+            # Verificar si hay libros asociados
+            cursor.execute("SELECT COUNT(*) FROM libros WHERE id_autor = %s", (id_autor,))
+            if cursor.fetchone()[0] > 0:
+                return False, "No se puede eliminar el autor porque tiene libros asociados"
+            
+            cursor.execute("DELETE FROM autores WHERE id = %s", (id_autor,))
+        conexion.commit()
+        return True, "Autor eliminado correctamente"
+    except Exception as e:
+        logging.error(f"Error al eliminar autor: {e}")
+        return False, "Error al eliminar el autor"
