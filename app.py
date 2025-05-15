@@ -12,7 +12,7 @@ app.config['MYSQL_PASSWORD'] = 'bookify_password'  # Contraseña más segura
 app.config['MYSQL_DB'] = 'bookify'
 app.config['MYSQL_PORT'] = 3306
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/iniciar_sesion', methods=['GET', 'POST'])
 def iniciar_sesion():
     # Si el usuario ya está logueado, redirigir al panel
